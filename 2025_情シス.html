@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インタラクティブ・サクセスストーリー：「あの件、どうなった？」からの解放宣言</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Calm Blue Accent -->
+    <!-- Application Structure Plan: A narrative-driven, single-page application following the 'Jo-Ha-Kyu' (序破急) structure of the source report. The user scrolls through the story from Problem (序), to an interactive Solution section (破), and finally to a data-driven Impact/Results section (急). This structure was chosen because the source material is a strong story, and guiding the user through it sequentially enhances comprehension and emotional impact. Key interactions include clicking the 'Three Arrows' to reveal solutions and animated charts/counters. Gemini API features for summary and next-step generation are added to enhance utility. -->
+    <!-- Visualization & Content Choices: 
+        - Problem (序): Goal: Empathize. Method: Titled cards with icons (HTML/CSS).
+        - Solution (破): Goal: Engage/Explain. Method: Interactive 'Three Arrows' diagram (HTML/CSS/JS).
+        - Impact (急): Goal: Impress/Inform. Method: Animated counters, Donut chart (Chart.js), Quote cards.
+        - Gemini - Summary: Goal: Utility. Method: Button triggers a modal with AI-generated text. Justification: Provides a quick overview for busy stakeholders.
+        - Gemini - Next Steps: Goal: Action-oriented. Method: Button reveals AI-generated strategic suggestions. Justification: Turns a report into a forward-looking plan.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #F8F7F4;
+            color: #3C3633;
+        }
+        .bg-warm-base { background-color: #F8F7F4; }
+        .bg-warm-card { background-color: #FFFFFF; }
+        .text-warm-heading { color: #3C3633; }
+        .text-warm-body { color: #605954; }
+        .text-accent-calm { color: #3A5B8A; }
+        .bg-accent-calm { background-color: #3A5B8A; }
+        .border-accent-calm { border-color: #3A5B8A; }
+        .shadow-custom { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+        .arrow-shaft { position: relative; width: 100%; height: 8px; background-color: #605954; border-radius: 4px; }
+        .arrow-head { width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 25px solid #605954; }
+        .wall { transition: all 0.5s ease-in-out; }
+        .wall-piece { transition: all 0.8s ease-out; }
+        .wall.crumbled .wall-piece-1 { transform: translate(-20px, -15px) rotate(-15deg); opacity: 0; }
+        .wall.crumbled .wall-piece-2 { transform: translate(10px, 20px) rotate(5deg); opacity: 0; }
+        .wall.crumbled .wall-piece-3 { transform: translate(30px, -10px) rotate(20deg); opacity: 0; }
+        .wall.crumbled .wall-piece-4 { transform: translate(-15px, 25px) rotate(-10deg); opacity: 0; }
+        .nav-link { transition: all 0.3s; padding-bottom: 4px; border-bottom: 2px solid transparent; }
+        .nav-link.active { border-bottom-color: #3A5B8A; color: #3A5B8A; font-weight: 700; }
+        .chart-container { position: relative; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; height: 320px; max-height: 400px; }
+        .modal { transition: opacity 0.25s ease; }
+        .modal-content { transition: transform 0.25s ease; }
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-bottom-color: #3A5B8A;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-warm-base">
+
+    <header class="bg-warm-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <ul class="flex justify-center items-center space-x-6 md:space-x-10 text-warm-body flex-grow">
+                <li><a href="#problem" class="nav-link">序：問題</a></li>
+                <li><a href="#solution" class="nav-link">破：解決策</a></li>
+                <li><a href="#result" class="nav-link">急：成果</a></li>
+            </ul>
+            <button id="ai-summary-btn" class="bg-accent-calm text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors text-sm whitespace-nowrap">✨ AIで要約を生成</button>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 md:py-20">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-20 md:mb-32">
+            <h1 class="text-3xl md:text-5xl font-bold text-warm-heading leading-tight">「あの件、どうなった？」からの<br class="md:hidden">解放宣言</h1>
+            <p class="mt-4 text-lg text-warm-body">問い合わせ対応の抜本改革による生産性向上ストーリー</p>
+        </section>
+
+        <!-- Section 1: The Problem (Jo) -->
+        <section id="problem" class="mb-20 md:mb-32">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-3xl font-bold text-warm-heading">序：見えない・分からない・終わらない「負のスパイラル」</h2>
+                <p class="mt-4 text-warm-body max-w-3xl mx-auto">かつて私たちの部署では、問い合わせ対応の混乱が日常でした。その結果、社員と担当者の双方に大きな負担がかかり、会社全体が非効率な状態に陥っていたのです。</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <div class="bg-warm-card p-8 rounded-xl shadow-custom transform hover:scale-105 transition-transform">
+                    <h3 class="text-xl font-bold text-warm-heading flex items-center"><span class="text-2xl mr-3">👤</span>社員の悩み</h3>
+                    <ul class="mt-4 space-y-3 text-warm-body list-disc list-inside">
+                        <li>「この申請、一体誰に聞けば…？」</li>
+                        <li>「簡単な質問なのに、回答が数日も来ない…」</li>
+                        <li>「状況が分からず、ただ待つしかない…」</li>
+                    </ul>
+                </div>
+                <div class="bg-warm-card p-8 rounded-xl shadow-custom transform hover:scale-105 transition-transform">
+                    <h3 class="text-xl font-bold text-warm-heading flex items-center"><span class="text-2xl mr-3">🤯</span>担当者の疲弊</h3>
+                    <ul class="mt-4 space-y-3 text-warm-body list-disc list-inside">
+                        <li>「またこの質問か…」同じ説明の繰り返し。</li>
+                        <li>問い合わせ対応で、本来の業務が中断される。</li>
+                        <li>自分が休むと、全ての対応がストップする。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: The Solution (Ha) -->
+        <section id="solution" class="mb-20 md:mb-32">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-3xl font-bold text-warm-heading">破：非効率の壁を射抜いた「三本の矢」</h2>
+                <p class="mt-4 text-warm-body max-w-3xl mx-auto">このカオスな状況を打破すべく、私たちはワークフロー改善プロジェクトを発足。三位一体の改革で、分厚い非効率の壁に挑みました。下の「矢」をクリックして、解決策の詳細をご覧ください。</p>
+            </div>
+            <div class="grid lg:grid-cols-3 items-center gap-8 max-w-6xl mx-auto">
+                <div class="lg:col-span-2">
+                    <div id="solution-details" class="bg-warm-card p-8 rounded-xl shadow-custom min-h-[250px] flex flex-col justify-center transition-all duration-500">
+                        <div id="solution-placeholder">
+                            <h3 class="text-xl font-bold text-warm-heading">解決策の詳細</h3>
+                            <p class="mt-2 text-warm-body">矢をクリックすると、ここに詳細が表示されます。</p>
+                        </div>
+                        <div id="solution-content" class="hidden">
+                             <h3 id="solution-title" class="text-xl font-bold text-accent-calm"></h3>
+                             <p id="solution-description" class="mt-2 text-warm-body"></p>
+                             <div id="solution-flow" class="mt-4 flex items-center justify-center space-x-2 md:space-x-4 text-xs md:text-sm text-warm-body"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col space-y-6">
+                    <button class="arrow-button p-4 bg-white rounded-lg shadow-custom hover:shadow-lg transition-shadow text-left" data-arrow="1">
+                        <span class="font-bold text-accent-calm">第一の矢：</span><span class="text-warm-heading">ワークフロー化</span>
+                    </button>
+                    <button class="arrow-button p-4 bg-white rounded-lg shadow-custom hover:shadow-lg transition-shadow text-left" data-arrow="2">
+                        <span class="font-bold text-accent-calm">第二の矢：</span><span class="text-warm-heading">窓口の一本化</span>
+                    </button>
+                    <button class="arrow-button p-4 bg-white rounded-lg shadow-custom hover:shadow-lg transition-shadow text-left" data-arrow="3">
+                        <span class="font-bold text-accent-calm">第三の矢：</span><span class="text-warm-heading">ナレッジの可視化</span>
+                    </button>
+                </div>
+            </div>
+             <div class="mt-12 flex items-center justify-center space-x-8">
+                <div class="flex items-center w-full max-w-sm">
+                    <div id="arrow-visual" class="flex flex-col space-y-3 w-full opacity-0 transition-opacity duration-1000">
+                        <div class="flex items-center"><div class="arrow-shaft"></div><div class="arrow-head"></div></div>
+                        <div class="flex items-center ml-4"><div class="arrow-shaft"></div><div class="arrow-head"></div></div>
+                        <div class="flex items-center"><div class="arrow-shaft"></div><div class="arrow-head"></div></div>
+                    </div>
+                </div>
+                <div id="wall-visual" class="wall relative w-24 h-32 bg-gray-300 border-2 border-gray-400 p-1 flex flex-col justify-between">
+                     <div class="wall-piece wall-piece-1 absolute inset-0 bg-stone-400 border border-stone-500 rounded-sm"></div>
+                     <div class="wall-piece wall-piece-2 absolute inset-0 bg-stone-400 border border-stone-500 rounded-sm m-1"></div>
+                     <div class="wall-piece wall-piece-3 absolute inset-0 bg-stone-400 border border-stone-500 rounded-sm m-2"></div>
+                     <div class="wall-piece wall-piece-4 absolute inset-0 bg-stone-400 border border-stone-500 rounded-sm m-px"></div>
+                    <span class="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">非効率</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: The Result (Kyu) -->
+        <section id="result" class="mb-12 md:mb-20">
+            <div class="text-center mb-12">
+                <h2 class="text-2xl md:text-3xl font-bold text-warm-heading">急：改革がもたらした、確かな成果</h2>
+                <p class="mt-4 text-warm-body max-w-3xl mx-auto">三位一体の改革は、目に見える形で結果に現れました。定量的データと、社員からのポジティブな声が、この成功を物語っています。</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Quantitative Results -->
+                <div class="lg:col-span-2 grid grid-cols-2 gap-8">
+                    <div class="bg-warm-card p-6 rounded-xl shadow-custom text-center">
+                        <h3 class="text-lg font-bold text-warm-heading">対応件数 (3か月)</h3>
+                        <p id="counter-cases" class="text-5xl font-bold text-accent-calm mt-2">0</p>
+                    </div>
+                    <div class="bg-warm-card p-6 rounded-xl shadow-custom text-center">
+                        <h3 class="text-lg font-bold text-warm-heading">納期への期待値向上</h3>
+                        <p class="text-4xl font-bold text-accent-calm mt-3">↗️ 2営業日以内</p>
+                        <p class="text-sm text-warm-body">の依頼が増加</p>
+                    </div>
+                    <div class="col-span-2 bg-warm-card p-6 rounded-xl shadow-custom">
+                        <h3 class="text-lg font-bold text-warm-heading text-center mb-4">案件クローズ率 (6月末)</h3>
+                        <div class="chart-container">
+                             <canvas id="closeRateChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Qualitative Results -->
+                <div class="bg-warm-card p-8 rounded-xl shadow-custom flex flex-col justify-center">
+                    <h3 class="text-xl font-bold text-warm-heading mb-6 text-center">数字以上の価値：喜びの声</h3>
+                    <div class="space-y-6">
+                        <div class="bg-sky-50 p-4 rounded-lg">
+                            <p class="font-bold text-sky-800">👤 社員の声</p>
+                            <p class="mt-1 text-warm-body">「すぐに解決できて本当に助かる！業務がスムーズに進むようになりました。」</p>
+                        </div>
+                        <div class="bg-emerald-50 p-4 rounded-lg">
+                            <p class="font-bold text-emerald-800">💪 担当者の声</p>
+                            <p class="mt-1 text-warm-body">「問い合わせ対応に追われなくなり、本来の専門的な仕事に集中できるようになりました！」</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Section -->
+        <section id="future" class="text-center py-16 bg-warm-card rounded-xl shadow-custom">
+            <h2 class="text-2xl md:text-3xl font-bold text-warm-heading">この変革を、全社へ</h2>
+            <p class="mt-4 text-warm-body max-w-3xl mx-auto">私たちは、単なる業務改善ではなく、社員の貴重な時間を創出し、会社全体の生産性を向上させる価値を生み出しました。<br>この成功体験をモデルケースとして、全社的な変革をリードしていきます。</p>
+            
+            <div class="mt-12">
+                <h3 class="text-xl font-bold text-warm-heading">✨ AIで次のステップを考える</h3>
+                <p class="mt-2 text-warm-body max-w-2xl mx-auto">この成功をどう広げていくか？AIに次のアクションプランを提案させてみましょう。</p>
+                <button id="ai-next-steps-btn" class="mt-4 bg-accent-calm text-white px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors font-bold">アクションプランを生成</button>
+                <div id="next-steps-container" class="mt-6 text-left max-w-3xl mx-auto hidden">
+                    <div id="next-steps-loader" class="flex justify-center items-center p-8">
+                        <div class="loader"></div>
+                    </div>
+                    <div id="next-steps-content" class="bg-gray-50 p-6 rounded-lg whitespace-pre-wrap"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- AI Summary Modal -->
+    <div id="ai-summary-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 opacity-0 pointer-events-none">
+        <div class="modal-content bg-warm-card rounded-xl shadow-custom w-11/12 max-w-2xl p-8 transform scale-95">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-warm-heading">✨ AIによるエグゼクティブサマリー</h3>
+                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="summary-loader" class="flex justify-center items-center p-8">
+                <div class="loader"></div>
+            </div>
+            <div id="summary-content" class="text-warm-body whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Gemini API Call Function ---
+    async function generateText(prompt) {
+        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${apiKey}`;
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`API call failed with status: ${response.status}`);
+            const result = await response.json();
+            if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                console.error("Unexpected API response structure:", result);
+                return "エラー：予期せぬ形式の応答がありました。";
+            }
+        } catch (error) {
+            console.error("Error calling Gemini API:", error);
+            return "エラー：AIの応答を取得できませんでした。ネットワーク接続を確認してください。";
+        }
+    }
+
+    // --- AI Summary Feature ---
+    const summaryBtn = document.getElementById('ai-summary-btn');
+    const summaryModal = document.getElementById('ai-summary-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const summaryLoader = document.getElementById('summary-loader');
+    const summaryContent = document.getElementById('summary-content');
+
+    const openModal = () => {
+        summaryModal.classList.remove('opacity-0', 'pointer-events-none');
+        summaryModal.querySelector('.modal-content').classList.remove('scale-95');
+    };
+    const closeModal = () => {
+        summaryModal.classList.add('opacity-0', 'pointer-events-none');
+        summaryModal.querySelector('.modal-content').classList.add('scale-95');
+    };
+
+    summaryBtn.addEventListener('click', async () => {
+        openModal();
+        summaryContent.innerHTML = '';
+        summaryLoader.style.display = 'flex';
+        
+        const summaryPrompt = `あなたは経営層向けの報告を作成する専門家です。以下のサクセスストーリーを分析し、重要なポイント（問題、解決策、成果）をまとめた200字程度の簡潔なエグゼクティブサマリーを作成してください。
+
+# 元のレポート内容
+## 問題点
+- 問い合わせ窓口がSlack、口頭、電話などバラバラで非効率。
+- 担当者しか状況が分からず、属人化し、対応が遅延していた。
+- 社員は「まだか」と不満を抱え、担当者は同じ質問の繰り返しで疲弊していた。
+
+## 解決策（三本の矢）
+1.  **ワークフロー化**: Slackフォームで問い合わせを受け付け、スプレッドシートに自動転記し、対応状況を可視化。
+2.  **窓口の一本化**: 全ての問い合わせを専用Slackチャンネルに集約し、迷いをなくした。
+3.  **ナレッジの可視化**: 過去のQ&AをGoogle Lookerで分析し、傾向把握と迅速な対策を可能にした。
+
+## 成果
+- 3か月で535件の問い合わせに対応。
+- 案件クローズ率は98.31%を達成。
+- 社員からは「すぐに解決できて助かる」と感謝の声。
+- 担当者は「本来の仕事に集中できる」と喜びの声。
+- 会社全体の生産性が向上した。`;
+        
+        const generatedSummary = await generateText(summaryPrompt);
+        summaryLoader.style.display = 'none';
+        summaryContent.textContent = generatedSummary;
+    });
+    closeModalBtn.addEventListener('click', closeModal);
+    summaryModal.addEventListener('click', (e) => {
+        if (e.target === summaryModal) closeModal();
+    });
+
+    // --- AI Next Steps Feature ---
+    const nextStepsBtn = document.getElementById('ai-next-steps-btn');
+    const nextStepsContainer = document.getElementById('next-steps-container');
+    const nextStepsLoader = document.getElementById('next-steps-loader');
+    const nextStepsContent = document.getElementById('next-steps-content');
+
+    nextStepsBtn.addEventListener('click', async () => {
+        nextStepsBtn.disabled = true;
+        nextStepsBtn.textContent = '生成中...';
+        nextStepsContainer.classList.remove('hidden');
+        nextStepsContent.innerHTML = '';
+        nextStepsLoader.style.display = 'flex';
+        
+        const nextStepsPrompt = `あなたは組織変革のコンサルタントです。以下のワークフロー改善の成功事例を基に、この取り組みを他の部門に展開するための具体的な次のアクションプランを提案してください。提案は箇条書きで、以下の要素を含めてください。
+
+1.  **次にターゲットとすべき部門の提案（例：人事、経理など）とその理由。**
+2.  **展開する際の具体的なステップ（3〜4ステップ）。**
+3.  **成功を測るための主要業績評価指標（KPI）の例。**
+
+# 成功事例の概要
+## 課題
+社内の問い合わせ対応が非効率で、属人化していた。
+
+## 実施した解決策
+- Slackワークフローによる問い合わせ受付の標準化と状況の可視化。
+- 問い合わせ窓口のSlackチャンネルへの一本化。
+- Google Lookerによるデータ分析とナレッジの蓄積。
+
+## 主な成果
+- 案件クローズ率98.3%達成。
+- 社員と担当者双方の満足度向上。
+- 部署全体の生産性向上。`;
+        
+        const generatedNextSteps = await generateText(nextStepsPrompt);
+        nextStepsLoader.style.display = 'none';
+        nextStepsContent.textContent = generatedNextSteps;
+        nextStepsBtn.disabled = false;
+        nextStepsBtn.textContent = 'アクションプランを再生成';
+    });
+
+
+    // --- Original Page Logic ---
+    const solutions = {
+        '1': { title: '第一の矢：問い合わせのワークフロー化', description: 'Slackワークフローでフォームを作成し、問い合わせ内容をスプレッドシートへ自動転記。誰が何に対応しているか、チーム全体で見えるようになりました。', flow: ['Slackフォーム', '→', '自動転記', '→', '状況を可視化'] },
+        '2': { title: '第二の矢：問い合わせ窓口の一本化', description: '全ての問い合わせを専用チャンネル「#all_help_社内手続き窓口」に集約。これにより、「どこに聞けば良いか」という社員の迷いを完全に払拭しました。', flow: ['様々な問い合わせ', '→', '#all_help_...', '→', '迷いゼロへ'] },
+        '3': { title: '第三の矢：問い合わせ内容の可視化', description: '蓄積されたQ&AデータをGoogle Lookerで体系的に整理・分析。未対応案件や問い合わせの傾向をダッシュボードで即座に把握し、迅速な対策が可能になりました。', flow: ['Q&Aデータ', '→', 'Google Looker', '→', '傾向を把握'] }
+    };
+    
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section[id]');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    const observerOptions = { rootMargin: '-20% 0px -80% 0px' };
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                });
+            }
+        });
+    }, observerOptions);
+    sections.forEach(section => sectionObserver.observe(section));
+
+    const arrowButtons = document.querySelectorAll('.arrow-button');
+    const solutionPlaceholder = document.getElementById('solution-placeholder');
+    const solutionContent = document.getElementById('solution-content');
+    const solutionTitle = document.getElementById('solution-title');
+    const solutionDescription = document.getElementById('solution-description');
+    const solutionFlow = document.getElementById('solution-flow');
+    const wallVisual = document.getElementById('wall-visual');
+    const arrowVisual = document.getElementById('arrow-visual');
+    let clickedArrows = new Set();
+
+    arrowButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const arrowId = button.dataset.arrow;
+            const data = solutions[arrowId];
+            solutionPlaceholder.classList.add('hidden');
+            solutionContent.classList.remove('hidden');
+            solutionTitle.textContent = data.title;
+            solutionDescription.textContent = data.description;
+            solutionFlow.innerHTML = '';
+            data.flow.forEach((item, index) => {
+                const el = document.createElement(index % 2 === 0 ? 'span' : 'div');
+                if (index % 2 === 0) {
+                   el.className = 'bg-gray-200 py-1 px-3 rounded-full';
+                   el.textContent = item;
+                } else {
+                   el.className = 'text-gray-400 font-bold text-xl';
+                   el.textContent = item;
+                }
+                solutionFlow.appendChild(el);
+            });
+            arrowButtons.forEach(btn => btn.classList.remove('bg-accent-calm', 'text-white'));
+            button.classList.add('bg-accent-calm', 'text-white');
+            if (!clickedArrows.has(arrowId)) clickedArrows.add(arrowId);
+            if (clickedArrows.size === 3) {
+                setTimeout(() => { arrowVisual.style.opacity = '1'; }, 300);
+                setTimeout(() => { wallVisual.classList.add('crumbled'); }, 800);
+            }
+        });
+    });
+
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+    
+    const counterCases = document.getElementById('counter-cases');
+    const counterObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            animateValue(counterCases, 0, 535, 1500);
+            counterObserver.unobserve(entries[0].target);
+        }
+    }, { threshold: 0.5 });
+    counterObserver.observe(counterCases);
+    
+    const chartObserver = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            new Chart(document.getElementById('closeRateChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['クローズ済み', '対応中'],
+                    datasets: [{ data: [98.31, 1.69], backgroundColor: ['#3A5B8A', '#E5E7EB'], borderColor: ['#FFFFFF', '#FFFFFF'], borderWidth: 4, hoverOffset: 8 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 20, font: { size: 14, family: "'Noto Sans JP', sans-serif" } } },
+                        tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw}%` } }
+                    }
+                },
+                 plugins: [{
+                    id: 'centerText',
+                    beforeDraw: (chart) => {
+                      const {width, height, ctx} = chart;
+                      ctx.restore();
+                      const fontSize = (height / 114).toFixed(2);
+                      ctx.font = `bold ${fontSize}em Noto Sans JP`;
+                      ctx.textBaseline = 'middle';
+                      const text = '98.3%';
+                      const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                      const textY = height / 2;
+                      ctx.fillStyle = '#3C3633';
+                      ctx.fillText(text, textX, textY);
+                      ctx.save();
+                    }
+                 }]
+            });
+            chartObserver.unobserve(entries[0].target);
+        }
+    }, { threshold: 0.5 });
+    chartObserver.observe(document.getElementById('closeRateChart'));
+});
+</script>
+</body>
+</html>
