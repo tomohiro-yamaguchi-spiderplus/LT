@@ -10,13 +10,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Warm Neutrals with Calm Blue Accent -->
-    <!-- Application Structure Plan: A narrative-driven, single-page application following the 'Jo-Ha-Kyu' (序破急) structure of the source report. The user scrolls through the story from Problem (序), to an interactive Solution section (破), and finally to a data-driven Impact/Results section (急). This structure was chosen because the source material is a strong story, and guiding the user through it sequentially enhances comprehension and emotional impact. Key interactions include clicking the 'Three Arrows' to reveal solutions and animated charts/counters. Gemini API features for summary and next-step generation are added to enhance utility. -->
+    <!-- Application Structure Plan: A narrative-driven, single-page application following the 'Jo-Ha-Kyu' (序破急) structure of the source report. The user scrolls through the story from Problem (序), to an interactive Solution section (破), and finally to a data-driven Impact/Results section (急). This structure was chosen because the source material is a strong story, and guiding the user through it sequentially enhances comprehension and emotional impact. Key interactions include clicking the 'Three Arrows' to reveal solutions and animated charts/counters to highlight the success metrics. -->
     <!-- Visualization & Content Choices: 
-        - Problem (序): Goal: Empathize. Method: Titled cards with icons (HTML/CSS).
-        - Solution (破): Goal: Engage/Explain. Method: Interactive 'Three Arrows' diagram (HTML/CSS/JS).
-        - Impact (急): Goal: Impress/Inform. Method: Animated counters, Donut chart (Chart.js), Quote cards.
-        - Gemini - Summary: Goal: Utility. Method: Button triggers a modal with AI-generated text. Justification: Provides a quick overview for busy stakeholders.
-        - Gemini - Next Steps: Goal: Action-oriented. Method: Button reveals AI-generated strategic suggestions. Justification: Turns a report into a forward-looking plan.
+        - Problem (序): Goal: Empathize. Method: Titled cards with icons (HTML/CSS) to clearly present user/staff pain points. Justification: Easy to digest the initial negative situation.
+        - Solution (破): Goal: Engage/Explain. Method: Interactive 'Three Arrows' diagram (HTML/CSS/JS). Clicking each arrow reveals its corresponding strategy. Justification: Makes learning about the solution an active, engaging process that reinforces the core metaphor.
+        - Impact (急) - Metrics: Goal: Impress. Method: Large animated counters (JS). Justification: Highlights the key quantitative results for immediate impact.
+        - Impact (急) - Close Rate: Goal: Compare/Inform. Method: Donut chart (Chart.js). Justification: Best way to show a part-to-whole relationship like a completion rate.
+        - Impact (急) - Feedback: Goal: Humanize. Method: Styled quote cards (HTML/CSS). Justification: Adds a human element to the success story.
     -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
@@ -44,34 +44,17 @@
         .nav-link { transition: all 0.3s; padding-bottom: 4px; border-bottom: 2px solid transparent; }
         .nav-link.active { border-bottom-color: #3A5B8A; color: #3A5B8A; font-weight: 700; }
         .chart-container { position: relative; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; height: 320px; max-height: 400px; }
-        .modal { transition: opacity 0.25s ease; }
-        .modal-content { transition: transform 0.25s ease; }
-        .loader {
-            width: 48px;
-            height: 48px;
-            border: 5px solid #FFF;
-            border-bottom-color: #3A5B8A;
-            border-radius: 50%;
-            display: inline-block;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body class="bg-warm-base">
 
     <header class="bg-warm-card/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <ul class="flex justify-center items-center space-x-6 md:space-x-10 text-warm-body flex-grow">
+        <nav class="container mx-auto px-6 py-3">
+            <ul class="flex justify-center items-center space-x-6 md:space-x-10 text-warm-body">
                 <li><a href="#problem" class="nav-link">序：問題</a></li>
                 <li><a href="#solution" class="nav-link">破：解決策</a></li>
                 <li><a href="#result" class="nav-link">急：成果</a></li>
             </ul>
-            <button id="ai-summary-btn" class="bg-accent-calm text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors text-sm whitespace-nowrap">✨ AIで要約を生成</button>
         </nav>
     </header>
 
@@ -206,160 +189,30 @@
         <section id="future" class="text-center py-16 bg-warm-card rounded-xl shadow-custom">
             <h2 class="text-2xl md:text-3xl font-bold text-warm-heading">この変革を、全社へ</h2>
             <p class="mt-4 text-warm-body max-w-3xl mx-auto">私たちは、単なる業務改善ではなく、社員の貴重な時間を創出し、会社全体の生産性を向上させる価値を生み出しました。<br>この成功体験をモデルケースとして、全社的な変革をリードしていきます。</p>
-            
-            <div class="mt-12">
-                <h3 class="text-xl font-bold text-warm-heading">✨ AIで次のステップを考える</h3>
-                <p class="mt-2 text-warm-body max-w-2xl mx-auto">この成功をどう広げていくか？AIに次のアクションプランを提案させてみましょう。</p>
-                <button id="ai-next-steps-btn" class="mt-4 bg-accent-calm text-white px-6 py-3 rounded-lg hover:bg-opacity-90 transition-colors font-bold">アクションプランを生成</button>
-                <div id="next-steps-container" class="mt-6 text-left max-w-3xl mx-auto hidden">
-                    <div id="next-steps-loader" class="flex justify-center items-center p-8">
-                        <div class="loader"></div>
-                    </div>
-                    <div id="next-steps-content" class="bg-gray-50 p-6 rounded-lg whitespace-pre-wrap"></div>
-                </div>
-            </div>
         </section>
     </main>
-
-    <!-- AI Summary Modal -->
-    <div id="ai-summary-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 opacity-0 pointer-events-none">
-        <div class="modal-content bg-warm-card rounded-xl shadow-custom w-11/12 max-w-2xl p-8 transform scale-95">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-warm-heading">✨ AIによるエグゼクティブサマリー</h3>
-                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
-            </div>
-            <div id="summary-loader" class="flex justify-center items-center p-8">
-                <div class="loader"></div>
-            </div>
-            <div id="summary-content" class="text-warm-body whitespace-pre-wrap"></div>
-        </div>
-    </div>
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Gemini API Call Function ---
-    async function generateText(prompt) {
-        const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-        const apiKey = "";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${apiKey}`;
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (!response.ok) throw new Error(`API call failed with status: ${response.status}`);
-            const result = await response.json();
-            if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
-                return result.candidates[0].content.parts[0].text;
-            } else {
-                console.error("Unexpected API response structure:", result);
-                return "エラー：予期せぬ形式の応答がありました。";
-            }
-        } catch (error) {
-            console.error("Error calling Gemini API:", error);
-            return "エラー：AIの応答を取得できませんでした。ネットワーク接続を確認してください。";
-        }
-    }
-
-    // --- AI Summary Feature ---
-    const summaryBtn = document.getElementById('ai-summary-btn');
-    const summaryModal = document.getElementById('ai-summary-modal');
-    const closeModalBtn = document.getElementById('close-modal-btn');
-    const summaryLoader = document.getElementById('summary-loader');
-    const summaryContent = document.getElementById('summary-content');
-
-    const openModal = () => {
-        summaryModal.classList.remove('opacity-0', 'pointer-events-none');
-        summaryModal.querySelector('.modal-content').classList.remove('scale-95');
-    };
-    const closeModal = () => {
-        summaryModal.classList.add('opacity-0', 'pointer-events-none');
-        summaryModal.querySelector('.modal-content').classList.add('scale-95');
-    };
-
-    summaryBtn.addEventListener('click', async () => {
-        openModal();
-        summaryContent.innerHTML = '';
-        summaryLoader.style.display = 'flex';
-        
-        const summaryPrompt = `あなたは経営層向けの報告を作成する専門家です。以下のサクセスストーリーを分析し、重要なポイント（問題、解決策、成果）をまとめた200字程度の簡潔なエグゼクティブサマリーを作成してください。
-
-# 元のレポート内容
-## 問題点
-- 問い合わせ窓口がSlack、口頭、電話などバラバラで非効率。
-- 担当者しか状況が分からず、属人化し、対応が遅延していた。
-- 社員は「まだか」と不満を抱え、担当者は同じ質問の繰り返しで疲弊していた。
-
-## 解決策（三本の矢）
-1.  **ワークフロー化**: Slackフォームで問い合わせを受け付け、スプレッドシートに自動転記し、対応状況を可視化。
-2.  **窓口の一本化**: 全ての問い合わせを専用Slackチャンネルに集約し、迷いをなくした。
-3.  **ナレッジの可視化**: 過去のQ&AをGoogle Lookerで分析し、傾向把握と迅速な対策を可能にした。
-
-## 成果
-- 3か月で535件の問い合わせに対応。
-- 案件クローズ率は98.31%を達成。
-- 社員からは「すぐに解決できて助かる」と感謝の声。
-- 担当者は「本来の仕事に集中できる」と喜びの声。
-- 会社全体の生産性が向上した。`;
-        
-        const generatedSummary = await generateText(summaryPrompt);
-        summaryLoader.style.display = 'none';
-        summaryContent.textContent = generatedSummary;
-    });
-    closeModalBtn.addEventListener('click', closeModal);
-    summaryModal.addEventListener('click', (e) => {
-        if (e.target === summaryModal) closeModal();
-    });
-
-    // --- AI Next Steps Feature ---
-    const nextStepsBtn = document.getElementById('ai-next-steps-btn');
-    const nextStepsContainer = document.getElementById('next-steps-container');
-    const nextStepsLoader = document.getElementById('next-steps-loader');
-    const nextStepsContent = document.getElementById('next-steps-content');
-
-    nextStepsBtn.addEventListener('click', async () => {
-        nextStepsBtn.disabled = true;
-        nextStepsBtn.textContent = '生成中...';
-        nextStepsContainer.classList.remove('hidden');
-        nextStepsContent.innerHTML = '';
-        nextStepsLoader.style.display = 'flex';
-        
-        const nextStepsPrompt = `あなたは組織変革のコンサルタントです。以下のワークフロー改善の成功事例を基に、この取り組みを他の部門に展開するための具体的な次のアクションプランを提案してください。提案は箇条書きで、以下の要素を含めてください。
-
-1.  **次にターゲットとすべき部門の提案（例：人事、経理など）とその理由。**
-2.  **展開する際の具体的なステップ（3〜4ステップ）。**
-3.  **成功を測るための主要業績評価指標（KPI）の例。**
-
-# 成功事例の概要
-## 課題
-社内の問い合わせ対応が非効率で、属人化していた。
-
-## 実施した解決策
-- Slackワークフローによる問い合わせ受付の標準化と状況の可視化。
-- 問い合わせ窓口のSlackチャンネルへの一本化。
-- Google Lookerによるデータ分析とナレッジの蓄積。
-
-## 主な成果
-- 案件クローズ率98.3%達成。
-- 社員と担当者双方の満足度向上。
-- 部署全体の生産性向上。`;
-        
-        const generatedNextSteps = await generateText(nextStepsPrompt);
-        nextStepsLoader.style.display = 'none';
-        nextStepsContent.textContent = generatedNextSteps;
-        nextStepsBtn.disabled = false;
-        nextStepsBtn.textContent = 'アクションプランを再生成';
-    });
-
-
-    // --- Original Page Logic ---
+    // Data
     const solutions = {
-        '1': { title: '第一の矢：問い合わせのワークフロー化', description: 'Slackワークフローでフォームを作成し、問い合わせ内容をスプレッドシートへ自動転記。誰が何に対応しているか、チーム全体で見えるようになりました。', flow: ['Slackフォーム', '→', '自動転記', '→', '状況を可視化'] },
-        '2': { title: '第二の矢：問い合わせ窓口の一本化', description: '全ての問い合わせを専用チャンネル「#all_help_社内手続き窓口」に集約。これにより、「どこに聞けば良いか」という社員の迷いを完全に払拭しました。', flow: ['様々な問い合わせ', '→', '#all_help_...', '→', '迷いゼロへ'] },
-        '3': { title: '第三の矢：問い合わせ内容の可視化', description: '蓄積されたQ&AデータをGoogle Lookerで体系的に整理・分析。未対応案件や問い合わせの傾向をダッシュボードで即座に把握し、迅速な対策が可能になりました。', flow: ['Q&Aデータ', '→', 'Google Looker', '→', '傾向を把握'] }
+        '1': {
+            title: '第一の矢：問い合わせのワークフロー化',
+            description: 'Slackワークフローでフォームを作成し、問い合わせ内容をスプレッドシートへ自動転記。誰が何に対応しているか、チーム全体で見えるようになりました。',
+            flow: ['Slackフォーム', '→', '自動転記', '→', '状況を可視化']
+        },
+        '2': {
+            title: '第二の矢：問い合わせ窓口の一本化',
+            description: '全ての問い合わせを専用チャンネル「#all_help_社内手続き窓口」に集約。これにより、「どこに聞けば良いか」という社員の迷いを完全に払拭しました。',
+            flow: ['様々な問い合わせ', '→', '#all_help_...', '→', '迷いゼロへ']
+        },
+        '3': {
+            title: '第三の矢：問い合わせ内容の可視化',
+            description: '蓄積されたQ&AデータをGoogle Lookerで体系的に整理・分析。未対応案件や問い合わせの傾向をダッシュボードで即座に把握し、迅速な対策が可能になりました。',
+            flow: ['Q&Aデータ', '→', 'Google Looker', '→', '傾向を把握']
+        }
     };
     
+    // Smooth Scrolling & Nav Highlighting
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('section[id]');
     
@@ -367,7 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const targetId = link.getAttribute('href');
-            document.querySelector(targetId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.querySelector(targetId).scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         });
     });
 
@@ -384,6 +240,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, observerOptions);
     sections.forEach(section => sectionObserver.observe(section));
 
+
+    // Solution Section Interaction
     const arrowButtons = document.querySelectorAll('.arrow-button');
     const solutionPlaceholder = document.getElementById('solution-placeholder');
     const solutionContent = document.getElementById('solution-content');
@@ -398,10 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
             const arrowId = button.dataset.arrow;
             const data = solutions[arrowId];
+
             solutionPlaceholder.classList.add('hidden');
             solutionContent.classList.remove('hidden');
+
             solutionTitle.textContent = data.title;
             solutionDescription.textContent = data.description;
+            
             solutionFlow.innerHTML = '';
             data.flow.forEach((item, index) => {
                 const el = document.createElement(index % 2 === 0 ? 'span' : 'div');
@@ -414,54 +275,92 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 solutionFlow.appendChild(el);
             });
+            
             arrowButtons.forEach(btn => btn.classList.remove('bg-accent-calm', 'text-white'));
             button.classList.add('bg-accent-calm', 'text-white');
-            if (!clickedArrows.has(arrowId)) clickedArrows.add(arrowId);
+            
+            if (!clickedArrows.has(arrowId)) {
+                clickedArrows.add(arrowId);
+            }
+
             if (clickedArrows.size === 3) {
-                setTimeout(() => { arrowVisual.style.opacity = '1'; }, 300);
-                setTimeout(() => { wallVisual.classList.add('crumbled'); }, 800);
+                setTimeout(() => {
+                    arrowVisual.style.opacity = '1';
+                }, 300);
+                setTimeout(() => {
+                    wallVisual.classList.add('crumbled');
+                }, 800);
             }
         });
     });
 
+    // Counters Animation
     function animateValue(obj, start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
             obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
-            if (progress < 1) window.requestAnimationFrame(step);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
         };
         window.requestAnimationFrame(step);
     }
     
     const counterCases = document.getElementById('counter-cases');
     const counterObserver = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-            animateValue(counterCases, 0, 535, 1500);
-            counterObserver.unobserve(entries[0].target);
-        }
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateValue(counterCases, 0, 535, 1500);
+                counterObserver.unobserve(entry.target);
+            }
+        });
     }, { threshold: 0.5 });
     counterObserver.observe(counterCases);
     
+    // Chart.js
     const chartObserver = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
             new Chart(document.getElementById('closeRateChart'), {
                 type: 'doughnut',
                 data: {
                     labels: ['クローズ済み', '対応中'],
-                    datasets: [{ data: [98.31, 1.69], backgroundColor: ['#3A5B8A', '#E5E7EB'], borderColor: ['#FFFFFF', '#FFFFFF'], borderWidth: 4, hoverOffset: 8 }]
+                    datasets: [{
+                        data: [98.31, 1.69],
+                        backgroundColor: ['#3A5B8A', '#E5E7EB'],
+                        borderColor: ['#FFFFFF', '#FFFFFF'],
+                        borderWidth: 4,
+                        hoverOffset: 8
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false, cutout: '70%',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
                     plugins: {
-                        legend: { position: 'bottom', labels: { padding: 20, font: { size: 14, family: "'Noto Sans JP', sans-serif" } } },
-                        tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw}%` } }
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                    family: "'Noto Sans JP', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
                     }
                 },
                  plugins: [{
                     id: 'centerText',
-                    beforeDraw: (chart) => {
+                    beforeDraw: function(chart) {
                       const {width, height, ctx} = chart;
                       ctx.restore();
                       const fontSize = (height / 114).toFixed(2);
@@ -480,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { threshold: 0.5 });
     chartObserver.observe(document.getElementById('closeRateChart'));
+
 });
 </script>
 </body>
